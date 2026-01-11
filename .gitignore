@@ -1,0 +1,85 @@
+# --- DEPENDENCIES ---
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# --- NEXT.JS / BUILD OUTPUTS ---
+/.next/
+/out/
+/build
+/dist
+/.turbo
+*.tsbuildinfo
+next-env.d.ts
+/.swc/
+/.out/
+
+# --- ENVIRONMENT SECRETS (SECURITY) ---
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+*.pem
+*.key
+
+# --- LOGS & DIAGNOSTICS ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+logs
+*.log
+npm-error.log*
+
+# --- TESTING ---
+/coverage
+/.nyc_output
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache
+
+# --- IDE & EDITORS (NON-REQUIRED) ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+.project
+.settings/
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+
+# --- DOCKER & INFRA ---
+.dockerignore
+docker-compose.override.yml
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# --- SYSTEM TRASH (NON-REQUIRED) ---
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# --- PYTHON & JUPYTER (CLEANUP) ---
+.ipynb_checkpoints/
+ragas-env/
+*.ipynb
+__pycache__/
+
+# --- MISC NON-REQUIRED ---
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache
+.vimspector.json

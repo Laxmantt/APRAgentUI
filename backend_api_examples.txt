@@ -1,0 +1,1216 @@
+# Enterprise Migration Assessment - Backend API Reference
+# Full Request & Response Examples (Production-Ready)
+
+This document provides a comprehensive reference for all backend API endpoints designed following REST API best practices and enterprise integration patterns.
+
+**Base URL:** `https://api.apr-agent.example.com/v1`
+**Authentication:** Bearer Token (JWT)
+**Content-Type:** `application/json`
+**API Version:** v1.0
+
+All responses follow the standard `ApiResponse<T>` envelope structure unless otherwise noted.
+
+================================================================================
+SECTION 1: SYSTEM & AUTHENTICATION
+================================================================================
+
+Endpoint: /api/health
+Method: GET
+Description: Health check to verify system availability and service status.
+Authentication: None required
+Response:
+{
+  "status": "ok",
+  "timestamp": "2026-01-07T14:21:39Z",
+  "version": "1.0.0",
+  "services": {
+    "database": "healthy",
+    "cache": "healthy",
+    "ai_engine": "healthy"
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/auth/login
+Method: POST
+Description: Authenticate a user and receive a JWT token with refresh token.
+Authentication: None required
+Request Headers:
+  Content-Type: application/json
+Request Body:
+{
+  "email": "admin@example.com",
+  "password": "your_secure_password"
+}
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "usr_1a2b3c4d",
+      "name": "Admin User",
+      "email": "admin@example.com",
+      "role": "admin",
+      "permissions": ["read:all", "write:all", "admin:system"]
+    },
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "rt_9x8y7z6w5v4u3t2s1r0q",
+    "expiresIn": 3600,
+    "tokenType": "Bearer"
+  },
+  "message": "Authentication successful"
+}
+Error Response (401):
+{
+  "success": false,
+  "error": {
+    "code": "AUTH_INVALID_CREDENTIALS",
+    "message": "Invalid email or password",
+    "details": null
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/auth/refresh
+Method: POST
+Description: Refresh an expired access token using a refresh token.
+Authentication: None required
+Request Body:
+{
+  "refreshToken": "rt_9x8y7z6w5v4u3t2s1r0q"
+}
+Response (200):
+{
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expiresIn": 3600,
+    "tokenType": "Bearer"
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/auth/logout
+Method: POST
+Description: Invalidate current session and revoke tokens.
+Authentication: Required (Bearer Token)
+Request Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Response (200):
+{
+  "success": true,
+  "message": "Logout successful"
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/auth/me
+Method: GET
+Description: Retrieve the current authenticated user's session details.
+Authentication: Required (Bearer Token)
+Request Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Response (200):
+{
+  "success": true,
+  "data": {
+    "id": "usr_1a2b3c4d",
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "role": "admin",
+    "permissions": ["read:all", "write:all", "admin:system"],
+    "lastLogin": "2026-01-07T14:15:00Z"
+  }
+}
+
+================================================================================
+SECTION 2: APPLICATION INVENTORY & ASSESSMENT
+================================================================================
+
+Endpoint: /api/applications
+Method: GET
+Description: Fetch paginated list of applications with filtering and sorting.
+Authentication: Required
+Query Parameters:
+  - page: number (default: 1)
+  - limit: number (default: 20, max: 100)
+  - status: string (optional: "Completed", "In Progress", "Pending")
+  - type: string (optional: "Web", "API", "Batch")
+  - sortBy: string (default: "name")
+  - sortOrder: string (default: "asc", options: "asc", "desc")
+  - search: string (optional: search by name)
+Request Example:
+  GET /api/applications?page=1&limit=20&status=Completed&sortBy=name&sortOrder=asc
+Response (200):
+{
+  "success": true,
+  "data": {
+    "applications": [
+      {
+        "id": "app_1",
+        "name": "Legacy CRM",
+        "version": "2.1.0",
+        "type": "Web Application",
+        "status": "Completed",
+        "complexity": "high",
+        "businessComplexity": "Critical",
+        "nfrComplexity": "High",
+        "regulatoryCompliance": "GDPR, PCI-DSS",
+        "dependencies": ["Oracle DB", "Auth Service", "Email Gateway"],
+        "dataSources": ["Oracle 11g", "Redis Cache"],
+        "dataGravity": {
+          "volumeGB": 2500,
+          "complexity": 85,
+          "growthRate": 5.2
+        },
+        "assessment": {
+          "risk": {
+            "total": 68,
+            "status": "warning"
+          },
+          "strategy": {
+            "value": "Refactor",
+            "confidence": 78
+          },
+          "wave": {
+            "value": 2
+          }
+        },
+        "createdAt": "2025-11-15T10:00:00Z",
+        "updatedAt": "2026-01-05T14:30:00Z"
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 3,
+      "totalItems": 45,
+      "itemsPerPage": 20,
+      "hasNextPage": true,
+      "hasPreviousPage": false
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/applications/:id
+Method: GET
+Description: Retrieve comprehensive details for a specific application.
+Authentication: Required
+Path Parameters:
+  - id: string (Application ID)
+Response (200):
+{
+  "success": true,
+  "data": {
+    "id": "app_1",
+    "name": "Legacy CRM",
+    "version": "2.1.0",
+    "type": "Web Application",
+    "status": "Completed",
+    "complexity": "high",
+    "businessComplexity": "Critical",
+    "nfrComplexity": "High",
+    "regulatoryCompliance": "GDPR, PCI-DSS",
+    "dependencies": ["Oracle DB", "Auth Service", "Email Gateway"],
+    "dataSources": ["Oracle 11g", "Redis Cache"],
+    "links": [
+      {
+        "id": "link_1",
+        "name": "Oracle DB Cluster",
+        "type": "database",
+        "direction": "upstream",
+        "strength": "hard",
+        "health": 45,
+        "latency": 120,
+        "throughput": "500 req/s"
+      },
+      {
+        "id": "link_2",
+        "name": "Auth Service",
+        "type": "api",
+        "direction": "downstream",
+        "strength": "hard",
+        "health": 92,
+        "latency": 25,
+        "throughput": "1200 req/s"
+      }
+    ],
+    "dataGravity": {
+      "volumeGB": 2500,
+      "complexity": 85,
+      "growthRate": 5.2,
+      "estimatedMigrationTime": "72 hours"
+    },
+    "assessment": {
+      "risk": {
+        "total": 68,
+        "technical": 72,
+        "business": 55,
+        "compliance": 45,
+        "status": "warning",
+        "reasoning": "High dependency health risk and data gravity concerns."
+      },
+      "strategy": {
+        "value": "Refactor",
+        "confidence": 78,
+        "status": "approved",
+        "reasoning": "Application architecture supports containerization with moderate refactoring effort."
+      },
+      "advisory": "Recommend phased migration approach with data replication strategy.",
+      "wave": {
+        "value": 2,
+        "assignedBy": "usr_1a2b3c4d",
+        "assignedAt": "2026-01-03T10:00:00Z"
+      }
+    },
+    "genAIProfile": {
+      "technicalProfile": "Monolithic .NET Framework application with SQL Server backend",
+      "businessValue": 85,
+      "modernizationScore": 72,
+      "insights": [
+        "Strong candidate for containerization",
+        "Database migration complexity is primary risk factor",
+        "Business logic is well-documented and testable"
+      ]
+    },
+    "metadata": {
+      "createdAt": "2025-11-15T10:00:00Z",
+      "updatedAt": "2026-01-05T14:30:00Z",
+      "createdBy": "usr_system",
+      "lastAssessedBy": "usr_1a2b3c4d",
+      "lastAssessedAt": "2026-01-05T14:30:00Z"
+    }
+  }
+}
+Error Response (404):
+{
+  "success": false,
+  "error": {
+    "code": "APP_NOT_FOUND",
+    "message": "Application with ID 'app_999' not found",
+    "details": null
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/applications/:id
+Method: PUT
+Description: Update application assessment data and trigger AI re-evaluation.
+Authentication: Required
+Path Parameters:
+  - id: string (Application ID)
+Request Body:
+{
+  "complexity": "high",
+  "businessComplexity": "Critical",
+  "nfrComplexity": "High",
+  "regulatoryCompliance": "GDPR, PCI-DSS, HIPAA",
+  "dependencies": ["Oracle DB", "Auth Service", "Email Gateway", "Payment Gateway"],
+  "dataSources": ["Oracle 11g", "Redis Cache", "S3 Bucket"],
+  "customFields": {
+    "frameworks": [".NET Framework 4.8", "jQuery 3.x"],
+    "trafficPatterns": "Peak: 5000 req/min, Average: 1200 req/min",
+    "integrationPoints": ["Salesforce API", "Stripe Payment API"]
+  }
+}
+Response (200):
+{
+  "success": true,
+  "data": {
+    "id": "app_1",
+    "name": "Legacy CRM",
+    "updatedAt": "2026-01-07T14:25:00Z",
+    "assessment": {
+      "risk": {
+        "total": 72,
+        "status": "warning"
+      },
+      "strategy": {
+        "value": "Replatform",
+        "confidence": 82,
+        "reasoning": "Updated compliance requirements suggest cloud-native replatform approach."
+      }
+    },
+    "message": "Application updated successfully. AI assessment recalculated."
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/applications/upload
+Method: POST
+Description: Upload CMDB inventory file for bulk import (supports CSV, JSON, XML, XLSX).
+Authentication: Required
+Content-Type: multipart/form-data
+Request (Multipart):
+  - file: inventory_v2.csv (required)
+  - overwrite: boolean (optional, default: false)
+  - validateOnly: boolean (optional, default: false)
+Response (200):
+{
+  "success": true,
+  "data": {
+    "jobId": "job_abc123",
+    "fileName": "inventory_v2.csv",
+    "fileSize": "2.4 MB",
+    "status": "processing",
+    "summary": {
+      "totalRecords": 150,
+      "validRecords": 145,
+      "invalidRecords": 5,
+      "duplicates": 3
+    },
+    "validationErrors": [
+      {
+        "row": 12,
+        "field": "complexity",
+        "error": "Invalid value 'VeryHigh'. Expected: low, medium, high"
+      },
+      {
+        "row": 45,
+        "field": "regulatoryCompliance",
+        "error": "Missing required field"
+      }
+    ],
+    "estimatedCompletionTime": "2026-01-07T14:30:00Z"
+  }
+}
+Error Response (400):
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_FILE_FORMAT",
+    "message": "Unsupported file format. Accepted formats: CSV, JSON, XML, XLSX",
+    "details": {
+      "receivedFormat": "txt",
+      "acceptedFormats": ["csv", "json", "xml", "xlsx"]
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/applications/upload/:jobId
+Method: GET
+Description: Check the status of a bulk upload job.
+Authentication: Required
+Path Parameters:
+  - jobId: string (Job ID from upload response)
+Response (200):
+{
+  "success": true,
+  "data": {
+    "jobId": "job_abc123",
+    "status": "completed",
+    "progress": 100,
+    "summary": {
+      "totalRecords": 150,
+      "imported": 145,
+      "failed": 5,
+      "skipped": 3
+    },
+    "startedAt": "2026-01-07T14:20:00Z",
+    "completedAt": "2026-01-07T14:28:00Z",
+    "errors": [
+      {
+        "row": 12,
+        "record": {"name": "App XYZ"},
+        "error": "Duplicate application name"
+      }
+    ]
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/search
+Method: GET
+Description: Global search for applications with advanced filtering.
+Authentication: Required
+Query Parameters:
+  - q: string (search query)
+  - fields: string[] (optional: fields to search in, default: ["name", "type"])
+  - limit: number (default: 10, max: 50)
+Request Example:
+  GET /api/search?q=CRM&fields=name,type&limit=10
+Response (200):
+{
+  "success": true,
+  "data": {
+    "results": [
+      {
+        "id": "app_1",
+        "name": "Legacy CRM",
+        "type": "Web Application",
+        "status": "Completed",
+        "score": 0.95,
+        "highlights": {
+          "name": "<mark>Legacy CRM</mark>"
+        }
+      },
+      {
+        "id": "app_5",
+        "name": "Modern CRM API",
+        "type": "API Service",
+        "status": "In Progress",
+        "score": 0.87,
+        "highlights": {
+          "name": "Modern <mark>CRM</mark> API"
+        }
+      }
+    ],
+    "total": 2,
+    "query": "CRM",
+    "executionTime": "45ms"
+  }
+}
+
+================================================================================
+SECTION 3: WAVE MANAGEMENT
+================================================================================
+
+Endpoint: /api/waves
+Method: GET
+Description: Fetch all defined migration waves with summary statistics.
+Authentication: Required
+Query Parameters:
+  - includeApplications: boolean (default: false)
+  - status: string (optional: "Planning", "In Progress", "Completed")
+Response (200):
+{
+  "success": true,
+  "data": {
+    "waves": [
+      {
+        "id": "wave_1",
+        "waveNumber": 1,
+        "name": "Wave 1 - Pilot",
+        "status": "Completed",
+        "startDate": "2024-01-15",
+        "endDate": "2024-02-28",
+        "actualEndDate": "2024-02-25",
+        "totalApps": 12,
+        "completedApps": 12,
+        "inProgressApps": 0,
+        "blockedApps": 0,
+        "avgRiskScore": 35,
+        "estimatedCost": 450000,
+        "actualCost": 425000,
+        "applicationIds": ["app_3", "app_6", "app_12"]
+      },
+      {
+        "id": "wave_2",
+        "waveNumber": 2,
+        "name": "Wave 2 - Core Systems",
+        "status": "In Progress",
+        "startDate": "2024-03-01",
+        "endDate": "2024-05-31",
+        "totalApps": 18,
+        "completedApps": 8,
+        "inProgressApps": 7,
+        "blockedApps": 3,
+        "avgRiskScore": 58,
+        "estimatedCost": 780000,
+        "applicationIds": ["app_1", "app_2", "app_7"]
+      }
+    ],
+    "summary": {
+      "totalWaves": 5,
+      "completedWaves": 1,
+      "inProgressWaves": 2,
+      "plannedWaves": 2
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/waves/groups
+Method: GET
+Description: Fetch waves grouped with rollup analytics for dashboard visualization.
+Authentication: Required
+Response (200):
+{
+  "success": true,
+  "data": {
+    "groups": [
+      {
+        "waveNumber": 1,
+        "totalApps": 12,
+        "readyApps": 12,
+        "blockedApps": 0,
+        "avgRiskScore": 35,
+        "criticalApps": 1,
+        "complianceReadiness": {
+          "gdprPercent": 100,
+          "pciCount": 3,
+          "hipaaCount": 0
+        },
+        "forecastedCost": 450000,
+        "applications": [
+          {
+            "id": "app_3",
+            "name": "Inventory System",
+            "type": "Web Application",
+            "complexity": "low",
+            "regulatoryCompliance": "GDPR"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/waves/:id
+Method: GET
+Description: Retrieve detailed information for a specific wave including action plan.
+Authentication: Required
+Path Parameters:
+  - id: string (Wave ID or wave number)
+Response (200):
+{
+  "success": true,
+  "data": {
+    "id": "wave_2",
+    "waveNumber": 2,
+    "name": "Wave 2 - Core Systems",
+    "status": "In Progress",
+    "startDate": "2024-03-01",
+    "endDate": "2024-05-31",
+    "totalApps": 18,
+    "actionPlan": {
+      "phases": [
+        {
+          "name": "Infrastructure Preparation",
+          "status": "Completed",
+          "tasks": [
+            {
+              "id": "task_1",
+              "description": "Provision Azure Kubernetes Cluster",
+              "status": "completed",
+              "assignee": "DevOps Team",
+              "completedAt": "2024-02-28"
+            },
+            {
+              "id": "task_2",
+              "description": "Configure VNet and Security Groups",
+              "status": "completed",
+              "assignee": "Network Team",
+              "completedAt": "2024-03-02"
+            }
+          ]
+        },
+        {
+          "name": "Data Migration",
+          "status": "In Progress",
+          "tasks": [
+            {
+              "id": "task_3",
+              "description": "Setup data replication for Oracle DB",
+              "status": "in_progress",
+              "assignee": "DBA Team",
+              "dueDate": "2024-03-15"
+            }
+          ]
+        }
+      ],
+      "risks": [
+        {
+          "id": "risk_1",
+          "title": "Database migration latency",
+          "severity": "High",
+          "mitigation": "Implement incremental replication strategy"
+        }
+      ],
+      "successCriteria": [
+        "Zero downtime during cutover",
+        "All integration tests passing",
+        "Performance benchmarks met"
+      ]
+    },
+    "dependencies": [
+      {
+        "id": "dep_1",
+        "sourceAppId": "app_1",
+        "targetAppId": "app_2",
+        "type": "API",
+        "techStack": "REST/JSON",
+        "currentEnv": "On-Premise",
+        "targetEnv": "Azure Cloud",
+        "description": "CRM to Payment Gateway integration",
+        "criticality": "High",
+        "health": 85
+      }
+    ],
+    "externalIntegrations": [
+      {
+        "id": "ext_1",
+        "name": "Salesforce API",
+        "type": "SaaS Integration",
+        "techStack": "REST API",
+        "currentEnv": "Cloud",
+        "targetEnv": "Cloud",
+        "description": "Customer data synchronization",
+        "criticality": "Critical",
+        "vendor": "Salesforce",
+        "sla": "99.9%"
+      }
+    ],
+    "dataSources": [
+      {
+        "id": "ds_1",
+        "name": "Oracle Production DB",
+        "type": "Relational Database",
+        "techStack": "Oracle 11g",
+        "currentEnv": "On-Premise",
+        "targetEnv": "Azure SQL",
+        "description": "Primary transactional database",
+        "criticality": "Critical",
+        "volumeGB": 2500,
+        "migrationStrategy": "Incremental replication"
+      }
+    ],
+    "infrastructure": [
+      {
+        "id": "infra_1",
+        "component": "Application Cluster",
+        "type": "Compute",
+        "techStack": "Azure Kubernetes Service",
+        "currentEnv": "VMware vSphere",
+        "targetEnv": "Azure AKS",
+        "description": "Container orchestration platform",
+        "criticality": "Critical",
+        "specifications": {
+          "nodes": 5,
+          "cpu": "16 cores per node",
+          "memory": "64 GB per node"
+        }
+      }
+    ]
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/waves/:id/risks
+Method: GET
+Description: Retrieve the risk register for a specific wave.
+Authentication: Required
+Path Parameters:
+  - id: string (Wave ID or wave number)
+Response (200):
+{
+  "success": true,
+  "data": {
+    "risks": [
+      {
+        "id": "risk_301",
+        "title": "Data Latency Concern",
+        "description": "Cross-region data replication may introduce latency",
+        "severity": "High",
+        "probability": "Medium",
+        "impact": "High",
+        "status": "Open",
+        "category": "Technical",
+        "owner": "DBA Team",
+        "identifiedDate": "2024-02-15",
+        "mitigationPlan": "Implement local caching layer and CDN",
+        "contingencyPlan": "Rollback to on-premise if latency exceeds 200ms",
+        "estimatedCost": 25000,
+        "timeline": "2 weeks"
+      },
+      {
+        "id": "risk_302",
+        "title": "Third-party API compatibility",
+        "description": "Legacy SOAP endpoints may not be supported in cloud",
+        "severity": "Medium",
+        "probability": "Low",
+        "impact": "Medium",
+        "status": "Mitigated",
+        "category": "Integration",
+        "owner": "Integration Team",
+        "mitigationPlan": "Develop REST adapter layer",
+        "mitigatedDate": "2024-03-01"
+      }
+    ],
+    "summary": {
+      "total": 8,
+      "open": 3,
+      "mitigated": 4,
+      "closed": 1,
+      "bySeverity": {
+        "critical": 1,
+        "high": 2,
+        "medium": 3,
+        "low": 2
+      }
+    }
+  }
+}
+
+================================================================================
+SECTION 4: AI ASSISTANT & CHAT
+================================================================================
+
+Endpoint: /api/chat
+Method: POST
+Description: Send a query to the AI Migration Assistant and receive contextual guidance.
+Authentication: Required
+Request Body:
+{
+  "message": "What is the recommended migration strategy for Legacy CRM?",
+  "context": {
+    "applicationId": "app_1",
+    "waveId": "wave_2"
+  },
+  "stream": false
+}
+Response (200):
+{
+  "success": true,
+  "data": {
+    "responseId": "resp_xyz789",
+    "message": "Based on the assessment of Legacy CRM, I recommend a **Replatform** strategy. Here's why:\n\n1. **Technical Compatibility**: The .NET Framework application can be containerized with moderate effort.\n2. **Data Gravity**: With 2.5TB of data, a phased migration with incremental replication is advisable.\n3. **Risk Mitigation**: The high dependency health risk (45%) on Oracle DB requires careful planning.\n\nRecommended approach:\n- Phase 1: Containerize application (2-3 weeks)\n- Phase 2: Setup data replication (1 week)\n- Phase 3: Parallel run and validation (2 weeks)\n- Phase 4: Cutover with rollback plan (1 week)\n\nEstimated timeline: 6-8 weeks\nEstimated cost: $180,000 - $220,000",
+    "citations": [
+      {
+        "source": "Application Assessment",
+        "url": "/assessment/app_1",
+        "excerpt": "Risk Score: 68%, Strategy: Refactor"
+      },
+      {
+        "source": "Wave 2 Action Plan",
+        "url": "/waves/2",
+        "excerpt": "Infrastructure: Azure Kubernetes Service"
+      }
+    ],
+    "metadata": {
+      "model": "gpt-4-turbo",
+      "usage": {
+        "promptTokens": 1250,
+        "completionTokens": 380,
+        "totalTokens": 1630
+      },
+      "confidence": 0.92,
+      "processingTime": 2.4
+    },
+    "timestamp": "2026-01-07T14:30:00Z"
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/chat/history
+Method: GET
+Description: Retrieve chat conversation history for the current user.
+Authentication: Required
+Query Parameters:
+  - limit: number (default: 50, max: 100)
+  - offset: number (default: 0)
+Response (200):
+{
+  "success": true,
+  "data": {
+    "conversations": [
+      {
+        "id": "conv_1",
+        "messages": [
+          {
+            "id": "msg_1",
+            "role": "user",
+            "content": "What is the recommended migration strategy for Legacy CRM?",
+            "timestamp": "2026-01-07T14:30:00Z"
+          },
+          {
+            "id": "msg_2",
+            "role": "assistant",
+            "content": "Based on the assessment...",
+            "timestamp": "2026-01-07T14:30:02Z",
+            "metadata": {
+              "model": "gpt-4-turbo",
+              "confidence": 0.92
+            }
+          }
+        ],
+        "createdAt": "2026-01-07T14:30:00Z",
+        "updatedAt": "2026-01-07T14:30:02Z"
+      }
+    ],
+    "pagination": {
+      "total": 15,
+      "limit": 50,
+      "offset": 0
+    }
+  }
+}
+
+================================================================================
+SECTION 5: ANALYTICS & REPORTS
+================================================================================
+
+Endpoint: /api/stats
+Method: GET
+Description: Retrieve global portfolio-wide statistics and KPIs.
+Authentication: Required
+Response (200):
+{
+  "success": true,
+  "data": {
+    "stats": {
+      "totalApps": 45,
+      "assessedApps": 35,
+      "cloudReady": 18,
+      "pendingReview": 7,
+      "inProgress": 10,
+      "avgRiskScore": 54.2,
+      "avgConfidenceScore": 76.8,
+      "totalDataVolume": 45000,
+      "estimatedTotalCost": 2450000
+    },
+    "trends": {
+      "assessmentVelocity": {
+        "thisWeek": 5,
+        "lastWeek": 3,
+        "change": "+66.7%"
+      },
+      "riskTrend": {
+        "current": 54.2,
+        "lastMonth": 58.1,
+        "change": "-3.9"
+      }
+    },
+    "byStrategy": {
+      "Rehost": 12,
+      "Replatform": 15,
+      "Refactor": 8,
+      "Retire": 3,
+      "Retain": 7
+    },
+    "byComplexity": {
+      "low": 15,
+      "medium": 20,
+      "high": 10
+    },
+    "byCompliance": {
+      "GDPR": 25,
+      "PCI-DSS": 12,
+      "HIPAA": 8,
+      "SOX": 5
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/activity
+Method: GET
+Description: Fetch recent system activities and audit logs with filtering.
+Authentication: Required
+Query Parameters:
+  - limit: number (default: 20, max: 100)
+  - offset: number (default: 0)
+  - userId: string (optional: filter by user)
+  - action: string (optional: filter by action type)
+  - startDate: ISO8601 (optional)
+  - endDate: ISO8601 (optional)
+Response (200):
+{
+  "success": true,
+  "data": {
+    "activities": [
+      {
+        "id": "act_1",
+        "user": "Admin User",
+        "userId": "usr_1a2b3c4d",
+        "action": "Completed assessment",
+        "actionType": "assessment.complete",
+        "target": "Legacy CRM",
+        "targetType": "application",
+        "targetId": "app_1",
+        "timestamp": "2026-01-07T10:30:00Z",
+        "metadata": {
+          "previousStatus": "In Progress",
+          "newStatus": "Completed",
+          "riskScore": 68
+        },
+        "ipAddress": "192.168.1.100",
+        "userAgent": "Mozilla/5.0..."
+      },
+      {
+        "id": "act_2",
+        "user": "Migration Manager",
+        "userId": "usr_2b3c4d5e",
+        "action": "Assigned to wave",
+        "actionType": "wave.assign",
+        "target": "Payment Gateway",
+        "targetType": "application",
+        "targetId": "app_5",
+        "timestamp": "2026-01-07T09:15:00Z",
+        "metadata": {
+          "waveNumber": 3,
+          "waveName": "Wave 3 - Supporting Systems"
+        }
+      }
+    ],
+    "pagination": {
+      "total": 156,
+      "limit": 20,
+      "offset": 0,
+      "hasMore": true
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/reports
+Method: GET
+Description: List all generated reports available for download.
+Authentication: Required
+Query Parameters:
+  - type: string (optional: filter by report type)
+  - status: string (optional: "ready", "generating", "failed")
+Response (200):
+{
+  "success": true,
+  "data": {
+    "reports": [
+      {
+        "id": "rep_101",
+        "name": "Q1 Migration Summary",
+        "type": "Portfolio Summary",
+        "format": "PDF",
+        "status": "ready",
+        "fileSize": "2.4 MB",
+        "generatedBy": "usr_1a2b3c4d",
+        "generatedAt": "2026-01-07T08:00:00Z",
+        "expiresAt": "2026-02-07T08:00:00Z",
+        "downloadUrl": "/api/reports/rep_101/download",
+        "parameters": {
+          "dateRange": "2024-01-01 to 2024-03-31",
+          "includeWaves": [1, 2]
+        }
+      },
+      {
+        "id": "rep_102",
+        "name": "Wave 2 Execution Blueprint",
+        "type": "Wave Plan",
+        "format": "Excel",
+        "status": "ready",
+        "fileSize": "1.8 MB",
+        "generatedBy": "usr_2b3c4d5e",
+        "generatedAt": "2026-01-06T14:30:00Z",
+        "downloadUrl": "/api/reports/rep_102/download"
+      }
+    ],
+    "total": 15
+  }
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/reports
+Method: POST
+Description: Trigger the generation of a new migration report.
+Authentication: Required
+Request Body:
+{
+  "type": "Wave Plan",
+  "format": "Excel",
+  "name": "Wave 3 Execution Blueprint",
+  "parameters": {
+    "waveId": "wave_3",
+    "includeRisks": true,
+    "includeDependencies": true,
+    "includeTimeline": true
+  }
+}
+Response (202):
+{
+  "success": true,
+  "data": {
+    "id": "rep_103",
+    "name": "Wave 3 Execution Blueprint",
+    "type": "Wave Plan",
+    "format": "Excel",
+    "status": "generating",
+    "estimatedCompletionTime": "2026-01-07T14:35:00Z",
+    "statusUrl": "/api/reports/rep_103/status"
+  },
+  "message": "Report generation started. Check status at /api/reports/rep_103/status"
+}
+
+--------------------------------------------------------------------------------
+
+Endpoint: /api/reports/:id/download
+Method: GET
+Description: Download a generated report file.
+Authentication: Required
+Path Parameters:
+  - id: string (Report ID)
+Response (200):
+  Content-Type: application/pdf (or application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
+  Content-Disposition: attachment; filename="Q1_Migration_Summary.pdf"
+  [Binary file content]
+
+Error Response (404):
+{
+  "success": false,
+  "error": {
+    "code": "REPORT_NOT_FOUND",
+    "message": "Report with ID 'rep_999' not found or has expired"
+  }
+}
+
+================================================================================
+SECTION 6: DATA INGESTION
+================================================================================
+
+Endpoint: /api/ingestion/files
+Method: GET
+Description: List all uploaded files with their processing status.
+Authentication: Required
+Query Parameters:
+  - status: string (optional: "success", "error", "processing")
+  - limit: number (default: 20)
+Response (200):
+{
+  "success": true,
+  "data": {
+    "files": [
+      {
+        "id": "file_1",
+        "fileName": "inventory_v2.csv",
+        "fileSize": "2.4 MB",
+        "uploadedBy": "usr_1a2b3c4d",
+        "uploadedAt": "2026-01-07T10:00:00Z",
+        "status": "success",
+        "recordsProcessed": 145,
+        "recordsFailed": 5,
+        "processingTime": "8 minutes"
+      },
+      {
+        "id": "file_2",
+        "fileName": "dependencies.json",
+        "fileSize": "856 KB",
+        "uploadedBy": "usr_2b3c4d5e",
+        "uploadedAt": "2026-01-06T15:30:00Z",
+        "status": "processing",
+        "progress": 65
+      }
+    ],
+    "total": 23
+  }
+}
+
+================================================================================
+SECTION 7: ERROR HANDLING & STATUS CODES
+================================================================================
+
+Standard HTTP Status Codes:
+  200 OK - Request successful
+  201 Created - Resource created successfully
+  202 Accepted - Request accepted for processing
+  204 No Content - Request successful, no content to return
+  400 Bad Request - Invalid request parameters
+  401 Unauthorized - Authentication required or failed
+  403 Forbidden - Insufficient permissions
+  404 Not Found - Resource not found
+  409 Conflict - Resource conflict (e.g., duplicate)
+  422 Unprocessable Entity - Validation error
+  429 Too Many Requests - Rate limit exceeded
+  500 Internal Server Error - Server error
+  503 Service Unavailable - Service temporarily unavailable
+
+Standard Error Response Format:
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable error message",
+    "details": {
+      "field": "fieldName",
+      "constraint": "validation rule violated"
+    },
+    "timestamp": "2026-01-07T14:30:00Z",
+    "requestId": "req_abc123"
+  }
+}
+
+Common Error Codes:
+  - AUTH_INVALID_CREDENTIALS: Invalid email or password
+  - AUTH_TOKEN_EXPIRED: Access token has expired
+  - AUTH_INSUFFICIENT_PERMISSIONS: User lacks required permissions
+  - APP_NOT_FOUND: Application not found
+  - WAVE_NOT_FOUND: Wave not found
+  - INVALID_FILE_FORMAT: Unsupported file format
+  - VALIDATION_ERROR: Request validation failed
+  - RATE_LIMIT_EXCEEDED: Too many requests
+  - INTERNAL_ERROR: Internal server error
+
+================================================================================
+SECTION 8: RATE LIMITING & PAGINATION
+================================================================================
+
+Rate Limiting:
+  - Standard tier: 1000 requests per hour
+  - Premium tier: 5000 requests per hour
+  - Rate limit headers included in all responses:
+    X-RateLimit-Limit: 1000
+    X-RateLimit-Remaining: 950
+    X-RateLimit-Reset: 1704636000
+
+Pagination:
+  - All list endpoints support pagination
+  - Query parameters: page, limit, offset
+  - Response includes pagination metadata:
+    {
+      "pagination": {
+        "currentPage": 1,
+        "totalPages": 5,
+        "totalItems": 95,
+        "itemsPerPage": 20,
+        "hasNextPage": true,
+        "hasPreviousPage": false
+      }
+    }
+
+================================================================================
+SECTION 9: SECURITY & HEADERS
+================================================================================
+
+Required Request Headers:
+  Authorization: Bearer <access_token>
+  Content-Type: application/json
+  X-API-Version: v1 (optional, defaults to latest)
+
+Recommended Security Headers:
+  X-Request-ID: Unique request identifier for tracing
+  X-Client-Version: Client application version
+
+Standard Response Headers:
+  X-Request-ID: Echo of request ID or server-generated
+  X-RateLimit-*: Rate limiting information
+  Cache-Control: Caching directives
+  ETag: Resource version identifier
+
+CORS Configuration:
+  - Allowed Origins: Configured per environment
+  - Allowed Methods: GET, POST, PUT, DELETE, OPTIONS
+  - Allowed Headers: Authorization, Content-Type, X-Request-ID
+  - Max Age: 86400 seconds
+
+================================================================================
+END OF API REFERENCE
+================================================================================
+
+For additional support or API integration questions, contact:
+  - Technical Support: api-support@apr-agent.example.com
+  - Documentation: https://docs.apr-agent.example.com
+  - Status Page: https://status.apr-agent.example.com

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: apr-agent-ui
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NEXT_PUBLIC_API_URL
+        value: https://apr-agent-ui.onrender.com/api
